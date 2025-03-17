@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.flightbooking.model.Flight;
 import com.flightbooking.model.Seat;
+import com.flightbooking.model.Seat.SeatClass;
 import com.flightbooking.repository.FlightRepository;
 import com.flightbooking.repository.SeatRepository;
 
@@ -74,32 +75,59 @@ public class FlightService {        //this is the service for flights
 
         logger.info("Generating random seats for flight {}", flight.getId());
         Random random = new Random();
-        int rows = 30;
+        int totalRows = 30;
         int seatsPerRow = 6;
         
-        // delete existing seats for this flight
-        seatRepository.deleteByFlightId(flight.getId());
         
-        for (int row = 1; row <= rows; row++) {
+        // class configuration
+        int firstClassRows = 2;     // Rows 1-2
+        int businessClassRows = 3;   // Rows 3-5
+        // Rest are economy class    // Rows 6-30
+        
+        // clear existing seats
+        flight.getSeats().clear();
+        
+        for (int row = 1; row <= totalRows; row++) {
+            // Determine seat class based on row number
+            SeatClass seatClass;
+            if (row <= firstClassRows) {
+                seatClass = SeatClass.FIRST;
+            } else if (row <= firstClassRows + businessClassRows) {
+                seatClass = SeatClass.BUSINESS;
+            } else {
+                seatClass = SeatClass.ECONOMY;
+            }
+            
             for (int seatNum = 0; seatNum < seatsPerRow; seatNum++) {
                 Seat seat = new Seat();
                 char letter = (char) ('A' + seatNum);
                 seat.setNumber(row + String.valueOf(letter));
                 seat.setStatus(random.nextDouble() < 0.7 ? "AVAILABLE" : "OCCUPIED");
                 seat.setWindow(seatNum == 0 || seatNum == seatsPerRow - 1);
-                seat.setHasExtraLegroom(row == 1 || row == 16);
-                seat.setNearExit(row == 1 || row == 16 || row == rows);
+                seat.setExtraLegroom(row == 1 || row == firstClassRows + 1 || row == totalRows);
+                seat.setNearExit(row == 1 || row == firstClassRows + 1 || row == totalRows);
+                seat.setSeatClass(seatClass);
                 seat.setFlight(flight);
-                seatRepository.save(seat); //man writing this was tedious
+                
+                // calculate seat price based on class and features
+                double basePrice = flight.getPrice();
+                double classMultiplier = seatClass.getPriceMultiplier();
+                double extraFeaturesMultiplier = 1.0;
+                if (seat.isWindow()) extraFeaturesMultiplier += 0.1;
+                if (seat.isExtraLegroom()) extraFeaturesMultiplier += 0.15;
+                if (seat.isNearExit()) extraFeaturesMultiplier += 0.05;
+                
+                seat.setPrice(basePrice * classMultiplier * extraFeaturesMultiplier);
+                flight.addSeat(seat); // use the helper method
             }
         }
         
         // Update available seats count
         long availableSeats = seatRepository.countByFlightIdAndStatus(flight.getId(), "AVAILABLE");
         flight.setAvailableSeats((int) availableSeats);
-        flight.setTotalSeats(rows * seatsPerRow);
+        flight.setTotalSeats(totalRows * seatsPerRow);
         flightRepository.save(flight);
         
-        logger.info("Generated {} seats for flight {}", rows * seatsPerRow, flight.getId());
+        logger.info("Generated {} seats for flight {}", totalRows * seatsPerRow, flight.getId());
     }
 } 

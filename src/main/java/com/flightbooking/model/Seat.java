@@ -1,11 +1,14 @@
 package com.flightbooking.model;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
 import lombok.Data;
+
 //seat data model
 @Data
 @Entity
@@ -17,9 +20,14 @@ public class Seat {
     private String number;
     private String status; // available or occupied
     private boolean isWindow;
-    private boolean hasExtraLegroom;
+    private boolean extraLegroom;
     private boolean isNearExit;
     
+    @Enumerated(EnumType.STRING)
+    private SeatClass seatClass;
+
+    private double price;
+
     @ManyToOne
     private Flight flight;
 
