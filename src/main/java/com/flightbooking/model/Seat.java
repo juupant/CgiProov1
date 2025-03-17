@@ -22,4 +22,26 @@ public class Seat {
     
     @ManyToOne
     private Flight flight;
+
+    public enum SeatClass {
+        FIRST("First Class", 2.5), //seat classes
+        BUSINESS("Business Class", 1.8),
+        ECONOMY("Economy Class", 1.0);
+        
+        private final String displayName;
+        private final double priceMultiplier;
+        
+        SeatClass(String displayName, double priceMultiplier) {
+            this.displayName = displayName;
+            this.priceMultiplier = priceMultiplier;
+        }
+        
+        public String getDisplayName() {
+            return displayName;
+        }
+        
+        public double getPriceMultiplier() {
+            return priceMultiplier;
+        }
+    }
 } 

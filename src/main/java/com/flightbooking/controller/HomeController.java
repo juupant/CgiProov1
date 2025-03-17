@@ -1,13 +1,14 @@
 package com.flightbooking.controller;
 
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.view.RedirectView;
 
-@Controller //a smarter man than me advised me to make this one idk why forgot to ask
+@RestController
 public class HomeController {
     
     @GetMapping("/")
-    public String home() {
-        return "redirect:/index.html";
+    public RedirectView home() {
+        return new RedirectView("/html/index.html");
     }
 } 
